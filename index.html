@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onyx Neon · Calculadora Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --nv: #b44fff; --ng: #00ffe5; --np: #ff2d78;
+    --gold: #ffd166; --dim: #6b6688;
+    --bg: #080810; --surface: #0e0e1a;
+    --card: #13131f; --border: #1e1e32; --text: #e8e0ff;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 60px;
+  }
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(180,79,255,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(180,79,255,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none; z-index:0;
+  }
+  .blob { position:fixed; border-radius:50%; filter:blur(80px); opacity:.15; pointer-events:none; z-index:0; }
+  .blob1 { width:300px;height:300px;background:var(--nv);top:-80px;left:-80px; }
+  .blob2 { width:260px;height:260px;background:var(--ng);bottom:-60px;right:-60px; }
+
+  .app { position:relative; z-index:1; width:100%; max-width:480px; }
+
+  /* HEADER */
+  header { text-align:center; margin-bottom:22px; }
+  .diamond {
+    width:48px; height:48px;
+    background: linear-gradient(135deg, var(--nv), var(--np));
+    clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+    margin: 0 auto 10px;
+    box-shadow: 0 0 24px var(--nv);
+    animation: pulse 3s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 18px var(--nv); }
+    50%      { box-shadow: 0 0 40px var(--nv), 0 0 70px var(--np); }
+  }
+  .brand {
+    font-family:'Orbitron',monospace; font-size:22px; font-weight:900;
+    letter-spacing:4px;
+    background: linear-gradient(90deg, var(--nv), var(--ng));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .tagline { font-size:11px; letter-spacing:3px; color:var(--dim); text-transform:uppercase; margin-top:3px; }
+
+  /* CARD */
+  .card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:14px; padding:18px 16px; margin-bottom:12px;
+  }
+  .card-title {
+    font-family:'Orbitron',monospace; font-size:10px;
+    letter-spacing:3px; text-transform:uppercase;
+    color:var(--nv); margin-bottom:14px;
+    border-bottom:1px solid var(--border); padding-bottom:8px;
+  }
+
+  /* TOGGLE BUTTONS */
+  .toggle-group { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .toggle-btn {
+    flex:1; min-width:70px; padding:9px 6px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface);
+    color:var(--dim); font-family:'Rajdhani',sans-serif;
+    font-size:13px; font-weight:600; cursor:pointer;
+    letter-spacing:1px; transition:all .2s; text-align:center;
+  }
+  .toggle-btn.active-v { border-color:var(--nv); background:rgba(180,79,255,.13); color:var(--nv); box-shadow:0 0 10px rgba(180,79,255,.35); }
+  .toggle-btn.active-g { border-color:var(--ng); background:rgba(0,255,229,.12); color:var(--ng); box-shadow:0 0 10px rgba(0,255,229,.3); }
+  .toggle-btn.active-p { border-color:var(--np); background:rgba(255,45,120,.12); color:var(--np); box-shadow:0 0 10px rgba(255,45,120,.3); }
+  .toggle-btn:hover { border-color:var(--nv); color:var(--text); }
+
+  /* INPUTS */
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:12px; }
+  .grid1 { display:grid; grid-template-columns:1fr; gap:12px; margin-bottom:12px; }
+  .field { display:flex; flex-direction:column; gap:4px; }
+  label.lbl { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); }
+  input[type=number] {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:8px; color:var(--text);
+    font-family:'Orbitron',monospace; font-size:15px;
+    padding:10px 12px; width:100%; outline:none;
+    transition:border-color .2s, box-shadow .2s;
+    -moz-appearance:textfield;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance:none; }
+  input[type=number]:focus { border-color:var(--ng); box-shadow:0 0 0 3px rgba(0,255,229,.12); }
+  .hint { font-size:10px; color:var(--dim); font-style:italic; }
+
+  /* CALC BUTTON */
+  .calc-btn {
+    width:100%; padding:15px; border-radius:12px; border:none;
+    background: linear-gradient(135deg, var(--np), var(--nv));
+    color:#fff; font-family:'Orbitron',monospace;
+    font-size:13px; font-weight:700; letter-spacing:3px;
+    cursor:pointer; box-shadow:0 0 24px rgba(255,45,120,.45);
+    transition:transform .15s, box-shadow .15s; margin-top:4px;
+    position:relative; overflow:hidden;
+  }
+  .calc-btn:hover { transform:translateY(-2px); box-shadow:0 0 36px rgba(255,45,120,.6); }
+  .calc-btn:active { transform:translateY(0); }
+
+  /* ERROR */
+  .error-box {
+    display:none; color:var(--np); font-size:12px;
+    padding:8px 12px; background:rgba(255,45,120,.08);
+    border:1px solid rgba(255,45,120,.3); border-radius:6px;
+    margin-top:8px; letter-spacing:.5px;
+  }
+  .error-box.show { display:block; }
+
+  /* RESULT CARD */
+  .result-card {
+    display:none; background:var(--card);
+    border:1px solid var(--nv); border-radius:16px;
+    padding:20px 16px; margin-top:14px;
+    box-shadow:0 0 30px rgba(180,79,255,.18);
+  }
+  .result-card.show { display:block; animation:fadeUp .4s ease; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+  .result-title {
+    font-family:'Orbitron',monospace; font-size:10px;
+    letter-spacing:3px; text-transform:uppercase;
+    color:var(--nv); margin-bottom:16px;
+    border-bottom:1px solid var(--border); padding-bottom:8px;
+  }
+  .section-label {
+    font-size:10px; letter-spacing:2px; text-transform:uppercase;
+    margin-bottom:8px; margin-top:4px;
+  }
+
+  /* RESULT BOXES */
+  .rboxes { display:grid; gap:8px; margin-bottom:14px; }
+  .rboxes.col2 { grid-template-columns:1fr 1fr; }
+  .rboxes.col3 { grid-template-columns:1fr 1fr 1fr; }
+  .rbox {
+    background:var(--surface); border-radius:10px;
+    padding:12px 10px; text-align:center;
+    border:1px solid var(--border);
+  }
+  .rbox-label { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--dim); margin-bottom:5px; }
+  .rbox-value { font-family:'Orbitron',monospace; font-size:19px; font-weight:700; line-height:1; }
+  .rbox-unit  { font-size:10px; color:var(--dim); margin-top:3px; }
+
+  /* MIX BAR */
+  .mix-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px; margin-bottom:14px;
+  }
+  .mix-row-label { display:flex; justify-content:space-between; font-size:12px; margin-bottom:3px; }
+  .bar-track { height:7px; border-radius:4px; background:var(--border); overflow:hidden; margin-bottom:10px; }
+  .bar-fill  { height:100%; border-radius:4px; }
+  .fill-a { background:linear-gradient(90deg, var(--nv), var(--np)); }
+  .fill-b { background:linear-gradient(90deg, var(--ng), #00b8a9); }
+
+  /* COST BREAKDOWN */
+  .cost-box {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:14px; margin-bottom:14px;
+  }
+  .cost-row {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:7px; font-size:13px;
+  }
+  .cost-row span:first-child { color:var(--dim); }
+  .cost-row span:last-child { font-family:'Orbitron',monospace; font-weight:600; }
+  .cost-divider { height:1px; background:var(--border); margin:8px 0; }
+  .cost-total { display:flex; justify-content:space-between; font-size:14px; font-weight:700; }
+
+  /* SALE PRICE */
+  .sale-box {
+    background:linear-gradient(135deg,rgba(255,45,120,.12),rgba(180,79,255,.08));
+    border:1px solid rgba(255,45,120,.4); border-radius:12px;
+    padding:16px 14px; margin-bottom:12px;
+  }
+  .sale-row { display:flex; justify-content:space-between; align-items:center; }
+  .sale-price { font-family:'Orbitron',monospace; font-size:28px; font-weight:900; color:var(--np); }
+  .sale-sub   { font-size:11px; color:var(--dim); margin-top:2px; }
+  .profit-pct { font-family:'Orbitron',monospace; font-size:22px; font-weight:700; color:var(--gold); }
+
+  /* MARKET REF */
+  .market-box {
+    background:rgba(255,209,102,.08); border:1px solid rgba(255,209,102,.35);
+    border-radius:10px; padding:14px;
+  }
+  .market-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; text-align:center; }
+  .market-val { font-family:'Orbitron',monospace; font-size:18px; font-weight:700; color:var(--gold); }
+  .market-note { font-size:11px; color:var(--dim); line-height:1.5; }
+
+  footer { margin-top:28px; text-align:center; font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase; }
+
+  @media(max-width:400px) {
+    .rboxes.col3 { grid-template-columns:1fr 1fr; }
+    .grid3 { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="diamond"></div>
+    <div class="brand">Onyx Neon</div>
+    <div class="tagline">Calculadora Pro · Resina + Neon Flex</div>
+  </header>
+
+  <!-- ── RESINA ── -->
+  <div class="card">
+    <div class="card-title">🔷 Tipo de cuadro</div>
+
+    <div class="toggle-group" id="shapeGroup">
+      <button class="toggle-btn active-v" onclick="setShape('square',this)">Cuadrado</button>
+      <button class="toggle-btn active-v" onclick="setShape('rect',this)">Rectangular</button>
+      <button class="toggle-btn active-v" onclick="setShape('circle',this)">Circular</button>
+    </div>
+
+    <div class="toggle-group" id="unitGroup" style="max-width:220px;margin-bottom:14px;">
+      <button class="toggle-btn active-g" onclick="setUnit('cm',this)">cm</button>
+      <button class="toggle-btn active-g" onclick="setUnit('in',this)">inches</button>
+    </div>
+
+    <div class="grid2" id="dimGrid">
+      <div class="field">
+        <label class="lbl" id="labelW">Ancho</label>
+        <input type="number" id="inpW" min="0" placeholder="0">
+        <span class="hint" id="hintW">cm</span>
+      </div>
+      <div class="field" id="heightField">
+        <label class="lbl">Alto</label>
+        <input type="number" id="inpH" min="0" placeholder="0">
+        <span class="hint" id="hintH">cm</span>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label class="lbl">Espesor resina</label>
+        <input type="number" id="inpThick" min="0" step="0.5" placeholder="2">
+        <span class="hint">mm · típico 1–3 mm</span>
+      </div>
+      <div class="field">
+        <label class="lbl">Capas</label>
+        <input type="number" id="inpLayers" min="1" max="10" placeholder="1" value="1">
+      </div>
+    </div>
+
+    <label class="lbl" style="display:block;margin-bottom:6px;">Proporción de mezcla</label>
+    <div class="toggle-group" id="mixGroup" style="max-width:280px;margin-bottom:14px;">
+      <button class="toggle-btn active-v" onclick="setMix(1,this)">1:1</button>
+      <button class="toggle-btn active-v" onclick="setMix(2,this)">2:1</button>
+      <button class="toggle-btn active-v" onclick="setMix(3,this)">3:1</button>
+    </div>
+
+    <div class="grid3">
+      <div class="field">
+        <label class="lbl">$/litro Parte A</label>
+        <input type="number" id="inpPA" min="0" placeholder="130000">
+        <span class="hint">Ej: $130.000/L</span>
+      </div>
+      <div class="field">
+        <label class="lbl">$/litro Parte B</label>
+        <input type="number" id="inpPB" min="0" placeholder="130000">
+        <span class="hint">Ej: $130.000/L</span>
+      </div>
+      <div class="field">
+        <label class="lbl">Margen %</label>
+        <input type="number" id="inpMargin" min="0" placeholder="40" value="40">
+      </div>
+    </div>
+  </div>
+
+  <!-- ── NEON FLEX ── -->
+  <div class="card">
+    <div class="card-title">💡 Neon Flex</div>
+
+    <label class="lbl" style="display:block;margin-bottom:6px;">Ubicación del neon</label>
+    <div class="toggle-group" id="neonTypeGroup" style="margin-bottom:14px;">
+      <button class="toggle-btn active-g" onclick="setNeonType('contorno',this)">Contorno</button>
+      <button class="toggle-btn active-g" onclick="setNeonType('interior',this)">Interior</button>
+      <button class="toggle-btn active-g" onclick="setNeonType('ambos',this)">Contorno + Interior</button>
+    </div>
+
+    <label class="lbl" style="display:block;margin-bottom:6px;">Color del neon</label>
+    <div class="toggle-group" id="neonColorGroup" style="margin-bottom:14px;flex-wrap:wrap;">
+      <button class="toggle-btn" style="min-width:60px;font-size:11px;" onclick="setNeonColor('morado','#b44fff',this)">Morado</button>
+      <button class="toggle-btn" style="min-width:60px;font-size:11px;" onclick="setNeonColor('cyan','#00ffe5',this)">Cyan</button>
+      <button class="toggle-btn" style="min-width:60px;font-size:11px;" onclick="setNeonColor('rosa','#ff2d78',this)">Rosa</button>
+      <button class="toggle-btn" style="min-width:60px;font-size:11px;" onclick="setNeonColor('blanco','#ffffff',this)">Blanco</button>
+      <button class="toggle-btn" style="min-width:60px;font-size:11px;" onclick="setNeonColor('verde','#39ff14',this)">Verde</button>
+      <button class="toggle-btn" style="min-width:60px;font-size:11px;" onclick="setNeonColor('rgb','#ffd166',this)">RGB</button>
+    </div>
+
+    <div class="grid2">
+      <div class="field">
+        <label class="lbl">Precio neon flex / metro</label>
+        <input type="number" id="inpNeonPrice" min="0" step="500" placeholder="10000" value="10000">
+        <span class="hint">COP aprox. $8.000–$15.000</span>
+      </div>
+      <div class="field">
+        <label class="lbl">Vueltas / capas</label>
+        <input type="number" id="inpNeonLayers" min="1" max="5" placeholder="1" value="1">
+        <span class="hint">1 = una vuelta de contorno</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="lbl">Metros extra (diseño interno)</label>
+      <input type="number" id="inpExtraNeon" min="0" step="0.1" placeholder="0">
+      <span class="hint">Letras, siluetas internas (metros adicionales)</span>
+    </div>
+  </div>
+
+  <!-- ── OTROS MATERIALES ── -->
+  <div class="card">
+    <div class="card-title">🛠 Otros materiales</div>
+    <div class="grid2">
+      <div class="field">
+        <label class="lbl">Base MDF/madera (COP)</label>
+        <input type="number" id="inpBase" min="0" placeholder="25000" value="25000">
+      </div>
+      <div class="field">
+        <label class="lbl">Vinilo/impresión (COP)</label>
+        <input type="number" id="inpVinyl" min="0" placeholder="15000" value="15000">
+      </div>
+      <div class="field">
+        <label class="lbl">Horas de trabajo</label>
+        <input type="number" id="inpLaborH" min="0" step="0.5" placeholder="2" value="2">
+      </div>
+      <div class="field">
+        <label class="lbl">Valor hora (COP)</label>
+        <input type="number" id="inpLaborRate" min="0" step="1000" placeholder="25000" value="25000">
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÓN -->
+  <button class="calc-btn" onclick="calculate()">⬡ CALCULAR</button>
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- ── RESULTADO ── -->
+  <div class="result-card" id="resultCard">
+    <div class="result-title" id="resultTitle">Resultado</div>
+
+    <!-- Resina -->
+    <div class="section-label" style="color:var(--nv);">Resina epóxica</div>
+    <div class="rboxes col3" id="resinBoxes">
+      <div class="rbox" style="border-color:rgba(0,255,229,.3);">
+        <div class="rbox-label">Volumen</div>
+        <div class="rbox-value" id="rVol" style="color:var(--ng);">—</div>
+        <div class="rbox-unit">ml</div>
+      </div>
+      <div class="rbox" style="border-color:rgba(180,79,255,.3);">
+        <div class="rbox-label">Peso aprox.</div>
+        <div class="rbox-value" id="rGrams" style="color:var(--nv);">—</div>
+        <div class="rbox-unit">gramos</div>
+      </div>
+      <div class="rbox" style="border-color:rgba(232,224,255,.2);">
+        <div class="rbox-label">Área</div>
+        <div class="rbox-value" id="rArea" style="color:var(--text);font-size:16px;">—</div>
+        <div class="rbox-unit" id="rAreaUnit">cm²</div>
+      </div>
+    </div>
+
+    <!-- Mezcla -->
+    <div class="mix-box">
+      <div class="lbl" style="margin-bottom:8px;">Desglose mezcla</div>
+      <div class="mix-row-label">
+        <span>Parte A (Resina)</span>
+        <span style="color:var(--nv);" id="rMlA">— ml</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill fill-a" id="barA" style="width:50%"></div></div>
+      <div class="mix-row-label">
+        <span>Parte B (Endurecedor)</span>
+        <span style="color:var(--ng);" id="rMlB">— ml</span>
+      </div>
+      <div class="bar-track" style="margin-bottom:0"><div class="bar-fill fill-b" id="barB" style="width:50%"></div></div>
+    </div>
+
+    <!-- Neon -->
+    <div class="section-label" style="color:var(--ng);">Neon Flex</div>
+    <div class="rboxes col2" style="margin-bottom:14px;">
+      <div class="rbox" style="border-color:rgba(0,255,229,.3);">
+        <div class="rbox-label">Metros necesarios</div>
+        <div class="rbox-value" id="rNeonM" style="color:var(--ng);">—</div>
+        <div class="rbox-unit">metros</div>
+      </div>
+      <div class="rbox" style="border-color:rgba(0,255,229,.3);">
+        <div class="rbox-label">Costo neon</div>
+        <div class="rbox-value" id="rNeonCost" style="color:var(--ng);font-size:15px;">—</div>
+        <div class="rbox-unit">COP</div>
+      </div>
+    </div>
+
+    <!-- Desglose costos -->
+    <div class="cost-box">
+      <div class="lbl" style="margin-bottom:10px;">Desglose de costos</div>
+      <div class="cost-row"><span>🔷 Resina epóxica</span><span id="cResina" style="color:var(--nv);">$—</span></div>
+      <div class="cost-row"><span>💡 Neon flex</span><span id="cNeon" style="color:var(--ng);">$—</span></div>
+      <div class="cost-row"><span>🪵 Base + vinilo</span><span id="cBase" style="color:#aaa;">$—</span></div>
+      <div class="cost-row"><span>⚒ Mano de obra</span><span id="cLabor" style="color:var(--gold);">$—</span></div>
+      <div class="cost-divider"></div>
+      <div class="cost-total">
+        <span>Costo total</span>
+        <span id="cTotal" style="font-family:'Orbitron',monospace;">$—</span>
+      </div>
+    </div>
+
+    <!-- Precio sugerido -->
+    <div class="sale-box">
+      <div class="lbl" style="color:var(--np);margin-bottom:10px;">Precio de venta sugerido</div>
+      <div class="sale-row">
+        <div>
+          <div class="sale-price" id="rSalePrice">$—</div>
+          <div class="sale-sub" id="rSaleSub">con margen</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="lbl">Rentabilidad</div>
+          <div class="profit-pct" id="rProfit">—%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Referencia mercado -->
+    <div class="market-box">
+      <div class="lbl" style="color:var(--gold);margin-bottom:10px;">📊 Referencia de mercado Colombia 2025</div>
+      <div class="market-grid">
+        <div>
+          <div class="lbl">Precio mercado similar</div>
+          <div class="market-val" id="rMarketRef">$—</div>
+        </div>
+        <div>
+          <div class="lbl">Tu precio vs mercado</div>
+          <div class="market-val" id="rCompete" style="font-size:15px;">—</div>
+        </div>
+      </div>
+      <div class="market-note">
+        Basado en precios reales: MercadoLibre Colombia, Publicity Digital, BrilloFlex y NeoCuadro (2025).<br>
+        30×45 desde $120.000 · 60×45 hasta $380.000 · 60×90 hasta $850.000.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div style="color:var(--nv);margin-bottom:4px;">✦ Onyx Neon ✦</div>
+    Resina Epóxica &amp; Neon Flex · Neiva, Colombia
+  </footer>
+</div>
+
+<script>
+  // ── STATE ──
+  let shape = 'rect', unit = 'cm', mix = 1;
+  let neonType = 'contorno', neonColor = '#b44fff';
+
+  // ── HELPERS ──
+  const $ = id => document.getElementById(id);
+  const fmt = n => Math.round(n).toLocaleString('es-CO');
+
+  function activateBtn(groupId, clicked, cls) {
+    document.querySelectorAll('#' + groupId + ' .toggle-btn').forEach(b => {
+      b.classList.remove('active-v','active-g','active-p');
+    });
+    clicked.classList.add(cls);
+  }
+
+  // ── SHAPE ──
+  function setShape(s, btn) {
+    shape = s;
+    activateBtn('shapeGroup', btn, 'active-v');
+    const hf = $('heightField');
+    const lw = $('labelW');
+    if (s === 'circle') { hf.style.display = 'none'; lw.textContent = 'Diámetro'; }
+    else if (s === 'square') { hf.style.display = 'none'; lw.textContent = 'Lado'; }
+    else { hf.style.display = ''; lw.textContent = 'Ancho'; }
+    clearResult();
+  }
+
+  // ── UNIT ──
+  function setUnit(u, btn) {
+    unit = u;
+    activateBtn('unitGroup', btn, 'active-g');
+    $('hintW').textContent = u;
+    $('hintH').textContent = u;
+    $('rAreaUnit').textContent = u + '²';
+    clearResult();
+  }
+
+  // ── MIX ──
+  function setMix(m, btn) {
+    mix = m;
+    activateBtn('mixGroup', btn, 'active-v');
+    clearResult();
+  }
+
+  // ── NEON TYPE ──
+  function setNeonType(t, btn) {
+    neonType = t;
+    activateBtn('neonTypeGroup', btn, 'active-g');
+    clearResult();
+  }
+
+  // ── NEON COLOR ──
+  function setNeonColor(name, color, btn) {
+    neonColor = color;
+    document.querySelectorAll('#neonColorGroup .toggle-btn').forEach(b => {
+      b.classList.remove('active-v','active-g','active-p');
+      b.style.borderColor = '';
+      b.style.background = '';
+      b.style.color = '';
+      b.style.boxShadow = '';
+    });
+    btn.style.borderColor = color;
+    btn.style.background = color + '22';
+    btn.style.color = color;
+    btn.style.boxShadow = '0 0 10px ' + color + '55';
+    clearResult();
+  }
+
+  // ── INIT ACTIVE STATES ──
+  window.onload = function() {
+    setShape('rect', document.querySelectorAll('#shapeGroup .toggle-btn')[1]);
+    setUnit('cm',    document.querySelectorAll('#unitGroup .toggle-btn')[0]);
+    setMix(1,        document.querySelectorAll('#mixGroup .toggle-btn')[0]);
+    setNeonType('contorno', document.querySelectorAll('#neonTypeGroup .toggle-btn')[0]);
+    setNeonColor('morado', '#b44fff', document.querySelectorAll('#neonColorGroup .toggle-btn')[0]);
+  };
+
+  function clearResult() {
+    $('resultCard').classList.remove('show');
+    $('errorBox').classList.remove('show');
+  }
+
+  function showError(msg) {
+    const el = $('errorBox');
+    el.textContent = '⚠ ' + msg;
+    el.classList.add('show');
+  }
+
+  function calcNeonMeters(wc, hc, type, nLayers) {
+    let m = 0;
+    if (type === 'contorno') m = 2 * (wc + hc) / 100;
+    else if (type === 'interior') m = (wc + hc) / 100;
+    else m = 3 * (wc + hc) / 100; // ambos
+    return m * (parseInt(nLayers) || 1);
+  }
+
+  // ── MAIN CALC ──
+  function calculate() {
+    clearResult();
+
+    const wv  = parseFloat($('inpW').value);
+    const hv  = parseFloat($('inpH').value);
+    const tv  = parseFloat($('inpThick').value);
+    const lv  = parseInt($('inpLayers').value) || 1;
+
+    if (!wv || wv <= 0) { showError('Ingresa el ancho, lado o diámetro del cuadro.'); return; }
+    if (shape === 'rect' && (!hv || hv <= 0)) { showError('Ingresa el alto del cuadro rectangular.'); return; }
+    if (!tv || tv <= 0) { showError('Ingresa el espesor de resina en mm (ej: 2).'); return; }
+
+    const f  = unit === 'in' ? 2.54 : 1;
+    const wc = wv * f;
+    const hc = (shape === 'rect' ? hv : wv) * f;
+
+    let area;
+    if (shape === 'circle') area = Math.PI * Math.pow(wc / 2, 2);
+    else if (shape === 'square') area = wc * wc;
+    else area = wc * hc;
+
+    const totalVol = area * (tv / 10) * lv;
+    const totalG   = totalVol * 1.1;
+    const fracA    = mix / (mix + 1);
+    const mlA      = totalVol * fracA;
+    const mlB      = totalVol * (1 - fracA);
+
+    // Resina costo (precio por litro)
+    const pA = parseFloat($('inpPA').value) || 130000;
+    const pB = parseFloat($('inpPB').value) || 130000;
+    const resinCost = (mlA / 1000) * pA + (mlB / 1000) * pB;
+
+    // Neon flex
+    const neonPriceM  = parseFloat($('inpNeonPrice').value) || 10000;
+    const neonLayers  = $('inpNeonLayers').value;
+    const extraNeonM  = parseFloat($('inpExtraNeon').value) || 0;
+    const neonM       = calcNeonMeters(wc, hc, neonType, neonLayers);
+    const totalNeonM  = neonM + extraNeonM;
+    const neonCost    = totalNeonM * neonPriceM;
+
+    // Otros
+    const baseCost  = parseFloat($('inpBase').value)      || 25000;
+    const vinCost   = parseFloat($('inpVinyl').value)     || 0;
+    const laborH    = parseFloat($('inpLaborH').value)    || 2;
+    const laborRate = parseFloat($('inpLaborRate').value) || 25000;
+    const laborCost = laborH * laborRate;
+
+    const totalCost = resinCost + neonCost + baseCost + vinCost + laborCost;
+    const mg        = parseFloat($('inpMargin').value) || 40;
+    const salePrice = totalCost * (1 + mg / 100);
+    const profit    = ((salePrice - totalCost) / salePrice * 100).toFixed(0);
+
+    // Referencia mercado
+    let marketRef = 120000;
+    if (area > 2000) marketRef = 250000;
+    if (area > 3000) marketRef = 380000;
+    if (area > 4800) marketRef = 520000;
+    if (area > 7000) marketRef = 680000;
+    if (area > 9000) marketRef = 850000;
+
+    // ── RENDER ──
+    $('resultTitle').textContent = `Resultado · ${wc.toFixed(0)}×${hc.toFixed(0)} ${unit}`;
+    $('rAreaUnit').textContent = unit + '²';
+
+    $('rVol').textContent    = totalVol.toFixed(1);
+    $('rGrams').textContent  = totalG.toFixed(1);
+    $('rArea').textContent   = area.toFixed(1);
+
+    $('rMlA').textContent = mlA.toFixed(1) + ' ml';
+    $('rMlB').textContent = mlB.toFixed(1) + ' ml';
+    $('barA').style.width = (fracA * 100).toFixed(0) + '%';
+    $('barB').style.width = ((1 - fracA) * 100).toFixed(0) + '%';
+
+    $('rNeonM').textContent    = totalNeonM.toFixed(2);
+    $('rNeonCost').textContent = '$' + fmt(neonCost);
+
+    $('cResina').textContent = '$' + fmt(resinCost);
+    $('cNeon').textContent   = '$' + fmt(neonCost);
+    $('cBase').textContent   = '$' + fmt(baseCost + vinCost);
+    $('cLabor').textContent  = '$' + fmt(laborCost);
+    $('cTotal').textContent  = '$' + fmt(totalCost);
+
+    $('rSalePrice').textContent = '$' + fmt(salePrice);
+    $('rSaleSub').textContent   = `con ${mg}% de margen · ganancia $${fmt(salePrice - totalCost)}`;
+    $('rProfit').textContent    = profit + '%';
+
+    $('rMarketRef').textContent = '$' + fmt(marketRef);
+    const compete = salePrice <= marketRef;
+    $('rCompete').textContent  = compete ? '✓ Competitivo' : '↑ Premium';
+    $('rCompete').style.color  = compete ? 'var(--ng)' : 'var(--np)';
+
+    $('resultCard').classList.add('show');
+    $('resultCard').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+</script>
+</body>
+</html>
